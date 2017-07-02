@@ -1,0 +1,72 @@
+#!/bin/bash
+
+scpt_path=$(dirname $0)
+
+source $scpt_path/_loadconf.sh
+source $scpt_path/_utils.sh
+
+while [ "$main_action" != "q" ]; do
+
+ echo "-------------------------------------------------"
+ echo "BORG BACKUP TOOL (MAIN MENU)"
+ echo "-------------------------------------------------"
+
+ echo "
+  1 - List last backups of all repositories
+  2 - List mounted volumes
+  3 - Manager repositories
+  4 - Show repositories filesystem usage
+  5 - Manage repository list/config file
+  q - Quit
+
+ "
+ action=$(getOption "12345q" "Option:")
+ [ "$action" == "q" ] && exit 0
+
+ if [ "$action" == "1" ] ; then
+
+  echo "-------------------------------------------------"
+  echo "LAST BACKUPS OF ALL REPOSITORIES"
+  echo "-------------------------------------------------"
+  source $scpt_path/_lastbackups.sh
+
+ elif [ "$action" == "2" ] ; then
+
+  echo "-------------------------------------------------"
+  echo "CURRENT MOUNTED VOLUMES"
+  echo "-------------------------------------------------"
+  if [ $( mount |grep borgfs |wc -l) -eq 0 ] ; then
+   echo "Nothing mounted..."
+  else
+   source $scpt_path/_mountedvols.sh
+  fi
+
+ elif [ "$action" == "3" ] ; then
+
+  declare -i d
+  id=0
+  repoid=0
+  source $scpt_path/_repos.sh
+
+ elif [ "$action" == "4" ] ; then
+  echo " "
+  echo "=> Repository data disk usage"
+  echo " "
+  df -hP $repo_dir
+  echo " "
+  echo "=> Individual usage"
+  echo " "
+  echo "Repository            Size      Path"
+  while read r ; do
+   echo "$(rpad 20 "$r") $(du -sh $repo_dir/$r |cut -d" " -f1)"
+  done < <(cd $repo_dir ; ls -1 )
+
+ elif [ "$action" == "5" ] ; then
+  source $scpt_path/_repolist.sh
+ 
+ fi
+ echo " "
+
+done
+exit 0
+
